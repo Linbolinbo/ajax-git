@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="js/jquery.mousewheel.js"></script>
+  <title>聊天机器人</title>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- 头部 Header 区域 -->
+    <div class="header">
+      <h3>小思同学</h3>
+      <img src="img/person01.png" alt="icon" />
+    </div>
+    <!-- 中间 聊天内容区域 -->
+    <div class="main">
+      <ul class="talk_list" style="top: 0px;" id="talk_list">
+        <li class="left_word">
+          <img src="img/person01.png" /> <span>嗨，最近想我没有？</span>
+        </li>
+        <!-- <li class="right_word">
+            <img src="img/person02.png" /> <span>你好哦</span>
+          </li> -->
+      </ul>
+      <div class="drag_bar" style="display: none;">
+        <div class="drager ui-draggable ui-draggable-handle" style="display: none; height: 412.628px;"></div>
+      </div>
+    </div>
+    <!-- 底部 消息编辑区域 -->
+    <div class="footer">
+      <img src="img/person02.png" alt="icon" />
+      <input type="text" placeholder="说的什么吧..." class="input_txt" id="ipt" />
+      <input type="button" value="发 送" class="input_sub" id="btnSend" />
+    </div>
+  </div>
+  <!-- 注意：只要为 audio 指定了新的 src 属性，而且指定了 autoplay，那么，语音就会自动播放 -->
+  <audio src="" id="voice" autoplay style="display: none;"></audio>
+  <script type="text/javascript" src="js/scroll.js"></script>
+  <!-- 主要函数 -->
+  <!-- <script src="./js/chat.js"></script> -->
+  <script>
+    $(function(){
+      // 发送消息自动置底
+      resetui()
+      // 为发送框按钮绑定一个事件
+      $('#btnSend').click(function(){
+        let text=$('#ipt').val().trim()
+        // 判断是否为空
+        if(text.length<=0) return $('#ipt').val('')
+        // 追加聊天内容到聊天框里
+        $('.talk_list').append(`<li class="right_word">
+            <img src="img/person02.png" /> <span>`+text+`</span>
+          </li>`)
+          $('#ipt').val('')
+          // 重置滚动条位置
+      resetui()
+      // 调用接口函数获取机器人消息
+      getMsg(text)
+      })
+      // 从接口里获取机器人发回来的消息
+      function getMsg (text){
+        $.ajax({
+          method:'get',
+          url:'https://ajax-base-api-t.itheima.net/api/robot',
+          data:{
+            spoken:text
+          },
+          success:function(res){
+            // console.log(res)
+            // 接受聊天消息
+            if(res.message=='success'){
+              let msg=res.data.info.text
+              $('.talk_list').append(`<li class="left_word">
+          <img src="img/person01.png" /> <span>`+msg+`</span>
+        </li>`)
+      resetui()
+        // 获得机器人聊天内容，把文本转化为语音
+        getVoice(msg)
+            }
+          }
+        })
+      }
+      // 将文字转化为语音播放
+      function getVoice (text){
+       $.ajax({
+        method:'get',
+        url:'https://ajax-base-api-t.itheima.net/api/synthesize',
+        data:{
+          text:text
+        },
+        success:function(res){
+          if(res.status===200){
+            $('#voice').attr('src',res.voiceUrl)
+          }
+        }
+       })
+
+      }
+      $('#ipt').keyup(function(e){
+        if(e.keyCode===13){
+          $('#btnSend').click()
+        }
+      })
+    })
+  </script>
+</body>
+
+</html>
